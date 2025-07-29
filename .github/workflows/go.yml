@@ -23,10 +23,13 @@ jobs: # Define as unidades de trabalho que serão executadas no workflow. Cada j
         go-version: '1.22' # Define a versão do Go para 1.22
 
     - name: Inicia banco de dados # Nome da etapa: inicializa o container do PostgreSQL usando Docker Compose
-      run: docker-compose up -d postgres # Executa o comando para iniciar o serviço postgres em background
+      run: docker compose up -d postgres # Executa o comando para iniciar o serviço postgres em background
 
-    - name: Lint # Nome da etapa: executa a análise de lint no código
-      run: docker run --rm -itv $(CURDIR):/app -w /app golangci/golangci-lint golangci-lint run controllers/ database/ models/ routes/ # Executa o linter dentro de um container Docker
+    - name: Lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: v1.59
+        args: controllers/ database/ models/ routes/
 
     - name: Test # Nome da etapa: executa os testes unitários
-      run: go test -v main_test.go # Executa os testes com verbosidade ativada
+      run: DB_HOST=${{ secrets.DB_HOST }} DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_USER=${{ secrets.DB_USER }} DB_NAME=${{ secrets.DB_NAME }} DB_PORT=${{ secrets.DB_PORT }} go test -v main_test.go
